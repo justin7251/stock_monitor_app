@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    environment:
+      - SQLALCHEMY_DATABASE_URI=mysql+pymysql://user:yourpassword@db:3306/stock_monitor
+    depends_on:
+      - db
+    env_file:
+      - .env
+    networks:
+      - app_network
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: yourpassword
+      MYSQL_DATABASE: stock_monitor
+      MYSQL_USER: user
+      MYSQL_PASSWORD: yourpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  db_data:
