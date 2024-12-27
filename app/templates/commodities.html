@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Commodity Monitor Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .price-positive {
+            color: green;
+        }
+        .price-negative {
+            color: red;
+        }
+        .stock-description {
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Commodity Monitor Dashboard</h1>
+    
+    <div style="margin-bottom: 15px;">
+        <a href="{{ url_for('commodities.commodity_add') }}" style="background-color: #4CAF50; color: white; padding: 10px; text-decoration: none; border-radius: 5px;">Add New Commodity</a>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Current Price</th>
+                <th>Target Price</th>
+                <th>Price Difference</th>
+                <th>Percentage</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for commodity in commodities %}
+            <tr>
+                <td>{{ commodity.symbol }}</td>
+                <td>{{ commodity.name }}</td>
+                <td>{{ commodity.commodity_type }}</td>
+                <td class="stock-description">{{ commodity.description }}</td>
+                <td>
+                    {% if commodity.current_price %}
+                        ${{ "%.2f"|format(commodity.current_price) }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+                <td>${{ "%.2f"|format(commodity.target_price) }}</td>
+                <td class="{{ 'price-positive' if commodity.price_difference > 0 else 'price-negative' if commodity.price_difference < 0 else '' }}">
+                    {% if commodity.price_difference is not none %}
+                        ${{ "%.2f"|format(commodity.price_difference) }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+                <td class="{{ 'price-positive' if commodity.price_percentage > 0 else 'price-negative' if commodity.price_percentage < 0 else '' }}">
+                    {% if commodity.price_percentage is not none %}
+                        {{ "%.2f"|format(commodity.price_percentage) }}%
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+                <td>
+                    <form method="POST" action="{{ url_for('commodities.commodity_delete', commodity_id=commodity.id) }}" style="display: inline;">
+                        <button type="submit" style="background: none; border: none; color: red; cursor: pointer;">🗑️</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add New Commodity</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        .error {
+            color: red;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Add New Commodity</h1>
+    
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+    
+    <form method="POST">
+        <label for="name">Commodity Name:</label>
+        <input type="text" id="name" name="name" required>
+        
+        <label for="symbol">Commodity Symbol:</label>
+        <input type="text" id="symbol" name="symbol" required>
+        
+        <label for="commodity_type">Commodity Type:</label>
+        <select id="commodity_type" name="commodity_type" required>
+            {% for type in commodity_types %}
+            <option value="{{ type }}">{{ type }}</option>
+            {% endfor %}
+        </select>
+        
+        <label for="description">Description:</label>
+        <textarea id="description" name="description" rows="4" required></textarea>
+        
+        <label for="target_price">Target Price:</label>
+        <input type="number" id="target_price" name="target_price" step="0.01" required>
+        
+        <input type="submit" value="Add Commodity">
+    </form>
+    
+    <p><a href="{{ url_for('commodities.commodity_list') }}">Back to Commodity List</a></p>
+</body>
+</html>
