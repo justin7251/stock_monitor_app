@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.env
+
+# Virtual Environment
+venv/
+env/
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Flask
+instance/
+.webassets-cache
+
+# Database
+*.db
+
+# Logs
+*.log
+
+# Docker
+docker-compose.override.yml 
