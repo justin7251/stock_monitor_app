@@ -1,30 +1,7 @@
-from app.database import db
 from flask_login import UserMixin
+from . import db
 from datetime import datetime
-
-class Commodity(db.Model):
-    __tablename__ = 'commodities'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    price = db.Column(db.Float, nullable=False)
-    volume = db.Column(db.Integer, nullable=False)
-    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-
-class Stock(db.Model):
-    __tablename__ = 'stocks'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    symbol = db.Column(db.String(10), nullable=False)
-    company_name = db.Column(db.String(100), nullable=False)
-    quantity = db.Column(db.Integer, nullable=False)
-    purchase_price = db.Column(db.Float, nullable=False)
-    purchase_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-
-    def __repr__(self):
-        return f'<Stock {self.symbol}>'
+from sqlalchemy import Index
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -33,7 +10,104 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    stocks = db.relationship('Stock', backref='user', lazy=True)
+    
+    # Relationships
+    user_stocks = db.relationship('UserStock', backref='user', lazy=True)
+    user_commodities = db.relationship('UserCommodity', backref='user', lazy=True)
 
     def __repr__(self):
         return f'<User {self.username}>'
+
+class Stock(db.Model):
+    """Stock data table - stores general stock information and current prices"""
+    __tablename__ = 'stocks'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    symbol = db.Column(db.String(10), nullable=False)
+    company_name = db.Column(db.String(100), nullable=False)
+    current_price = db.Column(db.Float)
+    last_updated = db.Column(db.DateTime, index=True)  # Index for time-based queries
+    
+    # Relationship
+    user_stocks = db.relationship('UserStock', backref='stock', lazy=True)
+
+    def __repr__(self):
+        return f'<Stock {self.symbol}>'
+
+    # Create indexes
+    __table_args__ = (
+        Index('idx_symbol', 'symbol'),  # Index for symbol lookups
+        Index('idx_symbol_date', 'symbol', 'last_updated'),  # Composite index for symbol + date queries
+    )
+
+class StockHistory(db.Model):
+    """Historical stock price data"""
+    __tablename__ = 'stock_history'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    stock_id = db.Column(db.Integer, db.ForeignKey('stocks.id'), nullable=False)
+    date = db.Column(db.DateTime, nullable=False)
+    open_price = db.Column(db.Float)
+    high_price = db.Column(db.Float)
+    low_price = db.Column(db.Float)
+    close_price = db.Column(db.Float)
+    volume = db.Column(db.BigInteger)
+    
+    # Create indexes for efficient querying
+    __table_args__ = (
+        Index('idx_stock_date', 'stock_id', 'date'),  # Composite index for stock + date queries
+        Index('idx_date', 'date'),  # Index for date-based queries
+    )
+
+    def __repr__(self):
+        return f'<StockHistory {self.stock_id}:{self.date}>'
+
+class UserStock(db.Model):
+    """User's stock holdings"""
+    __tablename__ = 'user_stocks'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    stock_id = db.Column(db.Integer, db.ForeignKey('stocks.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    purchase_price = db.Column(db.Float, nullable=False)
+    purchase_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    # Create indexes
+    __table_args__ = (
+        Index('idx_user_stock', 'user_id', 'stock_id'),  # Composite index for user + stock queries
+        Index('idx_purchase_date', 'purchase_date'),  # Index for date-based queries
+    )
+
+    def __repr__(self):
+        return f'<UserStock {self.user_id}:{self.stock_id}>'
+
+class Commodity(db.Model):
+    """Commodity data table - stores general commodity information and current prices"""
+    __tablename__ = 'commodities'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    symbol = db.Column(db.String(10), unique=True, nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    current_price = db.Column(db.Float)
+    last_updated = db.Column(db.DateTime)
+    
+    # Relationship
+    user_commodities = db.relationship('UserCommodity', backref='commodity', lazy=True)
+
+    def __repr__(self):
+        return f'<Commodity {self.symbol}>'
+
+class UserCommodity(db.Model):
+    """User's commodity holdings"""
+    __tablename__ = 'user_commodities'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    commodity_id = db.Column(db.Integer, db.ForeignKey('commodities.id'), nullable=False)
+    quantity = db.Column(db.Float, nullable=False)
+    purchase_price = db.Column(db.Float, nullable=False)
+    purchase_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<UserCommodity {self.user_id}:{self.commodity_id}>'
