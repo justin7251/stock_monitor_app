@@ -146,7 +146,7 @@
         <div class="nav-content">
             <a href="/" class="nav-brand">Stock Monitor</a>
             <div class="nav-links">
-                <a href="{{ url_for('home.dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a>
                 <a href="/stocks">Stocks</a>
                 <a href="{{ url_for('home.logout') }}">Logout</a>
             </div>
@@ -184,6 +184,18 @@
             </div>
         </div>
 
+        <!-- Portfolio Chart -->
+        <div class="data-section">
+            <h2>Portfolio Performance</h2>
+            <canvas id="portfolioChart"></canvas>
+        </div>
+
+        <!-- Individual Stock Performance -->
+        <div class="data-section">
+            <h2>Stock Performance</h2>
+            <canvas id="stockPerformanceChart"></canvas>
+        </div>
+
         <div class="data-section">
             <h2>Your Stocks</h2>
             <table>
@@ -214,5 +226,108 @@
             </table>
         </div>
     </div>
+
+    <script>
+    // Portfolio Value Chart
+    const portfolioCtx = document.getElementById('portfolioChart').getContext('2d');
+    new Chart(portfolioCtx, {
+        type: 'line',
+        data: {
+            labels: {{ dates | safe }},
+            datasets: [{
+                label: 'Portfolio Value',
+                data: {{ portfolio_values | safe }},
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Portfolio Value Over Time'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
+            }
+        }
+    });
+
+    // Stock Performance Chart
+    const stockData = {{ stock_data | safe }};
+    const stockCtx = document.getElementById('stockPerformanceChart').getContext('2d');
+    new Chart(stockCtx, {
+        type: 'line',
+        data: {
+            labels: Object.values(stockData)[0]?.dates || [],
+            datasets: Object.entries(stockData).map(([symbol, data]) => ({
+                label: symbol,
+                data: data.values,
+                borderColor: getRandomColor(),
+                fill: false,
+                tension: 0.4
+            }))
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Individual Stock Performance (Normalized)'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    ticks: {
+                        callback: function(value) {
+                            return (value * 100).toFixed(2) + '%';
+                        }
+                    }
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
+            }
+        }
+    });
+
+    function getRandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+    </script>
 </body>
 </html>
