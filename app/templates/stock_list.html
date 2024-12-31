@@ -51,7 +51,7 @@
                                 {{ "%.2f"|format((stock.current_price - stock.purchase_price) / stock.purchase_price * 100) }}%
                             </td>
                             <td>
-                                <a href="{{ url_for('stocks.detail', symbol=stock.symbol) }}" class="btn btn-info btn-sm">
+                                <a href="{{ url_for('stocks.stock_detail', symbol=stock.symbol) }}" class="btn btn-info btn-sm">
                                     <i class="fas fa-chart-line"></i> Details
                                 </a>
                             </td>

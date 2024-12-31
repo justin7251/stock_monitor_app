@@ -1,4 +1,9 @@
-# Update stock prices every 15 minutes during market hours (9:30 AM - 4:00 PM EST, Monday-Friday)
-*/15 9-16 * * 1-5 cd /app && /usr/local/bin/python -m app.tasks.stock_updater >> /var/log/price_updater.log 2>&1
+# Set environment variables
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PYTHONPATH=/app
+
+# Update stock prices every day at 12:00 PM EST (9:00 AM - 4:00 PM EST, Monday-Friday)
+0 12 * * 1-5 cd /app && docker-compose exec -T app python app/tasks/stock_updater.py >> /var/log/price_updater.log 2>&1
 # Run historical data update once per day after market close (5:00 PM EST, Monday-Friday)
-0 17 * * 1-5 cd /app && /usr/local/bin/python -m app.tasks.load_historical_data >> /var/log/historical_data.log 2>&1
+#0 17 * * 1-5 cd /app && docker-compose exec -T app python app/tasks/load_historical_data.py >> /var/log/historical_data.log 2>&1
