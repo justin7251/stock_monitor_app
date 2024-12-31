@@ -1,131 +1,86 @@
-from flask import Blueprint, render_template, flash
+from flask import render_template, Blueprint
 from flask_login import login_required, current_user
-from app.database.models import Stock, UserStock, StockHistory
-from app.database import db
+from app.database.models import UserStock, Stock, db
+from sqlalchemy import func
 from datetime import datetime, timedelta
-import logging
-import pandas as pd
-import json
+from app.utils.stock_utils import get_or_update_stock
 
-logger = logging.getLogger(__name__)
 dashboard_bp = Blueprint('dashboard', __name__)
 
 @dashboard_bp.route('/')
 @login_required
 def dashboard():
     try:
-        user_stocks = UserStock.query.filter_by(user_id=current_user.id).all()
-        total_stocks = len(user_stocks)
-        portfolio_value = 0.00
-        total_gain = 0.00
-        
-        # Get historical data for the past 30 days
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=30)
-        
-        all_stock_data = []
-        stocks_info = []
-        
-        for user_stock in user_stocks:
-            try:
-                stock = Stock.query.get(user_stock.stock_id)
-                if stock and stock.current_price:
-                    total_value = stock.current_price * user_stock.quantity
-                    purchase_value = user_stock.purchase_price * user_stock.quantity
-                    change = ((stock.current_price - user_stock.purchase_price) / user_stock.purchase_price) * 100
-                    
-                    portfolio_value += total_value
-                    total_gain += (total_value - purchase_value)
-                    
-                    # Get historical data for this stock
-                    history = StockHistory.query.filter(
-                        StockHistory.stock_id == stock.id,
-                        StockHistory.date >= start_date,
-                        StockHistory.date <= end_date
-                    ).order_by(StockHistory.date).all()
-                    
-                    # Convert to DataFrame
-                    df = pd.DataFrame([{
-                        'date': h.date,
-                        'close': h.close_price,
-                        'volume': h.volume,
-                        'symbol': stock.symbol,
-                        'value': h.close_price * user_stock.quantity
-                    } for h in history])
-                    
-                    if not df.empty:
-                        all_stock_data.append(df)
-                    
-                    stocks_info.append({
-                        'symbol': stock.symbol,
-                        'company_name': stock.company_name,
-                        'quantity': user_stock.quantity,
-                        'current_price': stock.current_price,
-                        'total_value': total_value,
-                        'change': change
-                    })
-                
-            except Exception as e:
-                logger.error(f"Error processing stock: {str(e)}")
-                continue
-        
-        # Combine all stock data
-        if all_stock_data:
-            combined_df = pd.concat(all_stock_data)
-            
-            # Portfolio value over time
-            portfolio_df = combined_df.groupby('date')['value'].sum().reset_index()
-            dates = portfolio_df['date'].dt.strftime('%Y-%m-%d').tolist()
-            portfolio_values = portfolio_df['value'].round(2).tolist()
-            
-            # Individual stock performance
-            stock_performance = combined_df.pivot(index='date', columns='symbol', values='close')
-            stock_returns = stock_performance.pct_change()
-            cumulative_returns = (1 + stock_returns).cumprod()
-            
-            # Convert to JSON for charts
-            stock_data = {
-                symbol: {
-                    'dates': cumulative_returns.index.strftime('%Y-%m-%d').tolist(),
-                    'values': cumulative_returns[symbol].round(4).tolist()
-                }
-                for symbol in stock_performance.columns
-            }
-            
-            # Calculate daily change
-            if len(portfolio_values) >= 2:
-                daily_change = ((portfolio_values[-1] - portfolio_values[-2]) / portfolio_values[-2] * 100)
+        # Get user's holdings with proper data structure and update prices
+        holdings = []
+        total_value = 0
+        total_cost = 0
+
+        user_stocks = (
+            db.session.query(UserStock, Stock)
+            .join(Stock, UserStock.stock_id == Stock.id)
+            .filter(UserStock.user_id == current_user.id)
+            .all()
+        )
+
+        print(f"Debug - User stocks: {user_stocks}")  # Debug print
+
+        for user_stock, stock in user_stocks:
+            # Update stock data
+            updated_stock, success, _ = get_or_update_stock(stock.symbol)
+            if success and updated_stock:
+                current_price = updated_stock.current_price
             else:
-                daily_change = 0
-        else:
-            dates = []
-            portfolio_values = []
-            stock_data = {}
-            daily_change = 0
-        
-        stats = {
-            'total_stocks': total_stocks,
-            'portfolio_value': portfolio_value,
-            'daily_change': daily_change,
-            'total_gain': total_gain
+                current_price = stock.current_price
+
+            # Calculate values
+            position_value = user_stock.quantity * current_price
+            position_cost = user_stock.quantity * user_stock.purchase_price
+            return_pct = ((current_price - user_stock.purchase_price) / user_stock.purchase_price * 100) if user_stock.purchase_price > 0 else 0
+
+            holdings.append({
+                'symbol': stock.symbol,
+                'name': stock.name,
+                'type': stock.type,
+                'quantity': user_stock.quantity,
+                'avg_price': user_stock.purchase_price,
+                'current_price': current_price,
+                'total_value': position_value,
+                'return_pct': return_pct
+            })
+
+            total_value += position_value
+            total_cost += position_cost
+
+        # Calculate portfolio summary
+        portfolio_summary = {
+            'total_value': round(total_value, 2),
+            'total_cost': round(total_cost, 2),
+            'total_return': round(((total_value - total_cost) / total_cost * 100) if total_cost > 0 else 0, 2),
+            'daily_change': 0  # Will be updated via API
         }
-        
-        return render_template('dashboard.html',
-                             stats=stats,
-                             stocks=stocks_info,
-                             dates=json.dumps(dates),
-                             portfolio_values=json.dumps(portfolio_values),
-                             stock_data=json.dumps(stock_data))
-    
+
+        # Sort holdings by value
+        holdings = sorted(holdings, key=lambda x: x['total_value'], reverse=True)
+
+        return render_template(
+            'dashboard.html',
+            holdings=holdings,
+            portfolio_summary=portfolio_summary
+        )
+
     except Exception as e:
-        logger.error(f"Dashboard error: {str(e)}")
-        flash('An error occurred while loading the dashboard.', 'danger')
-        return render_template('dashboard.html',
-                             stats={'total_stocks': 0,
-                                   'portfolio_value': 0.00,
-                                   'daily_change': 0.00,
-                                   'total_gain': 0.00},
-                             stocks=[],
-                             dates=json.dumps([]),
-                             portfolio_values=json.dumps([]),
-                             stock_data=json.dumps({}))
+        print(f"Dashboard error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        return render_template(
+            'dashboard.html',
+            holdings=[],
+            portfolio_summary={
+                'total_value': 0,
+                'total_cost': 0,
+                'total_return': 0,
+                'daily_change': 0
+            }
+        )

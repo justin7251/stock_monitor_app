@@ -9,7 +9,6 @@ def validate_stock_symbol(symbol):
     return True
 
 def validate_name(name):
-    """Validate name for commodities."""
     if not isinstance(name, str):
         raise ValueError("Name must be a string.")
     if len(name) < 1 or len(name) > 100:
@@ -17,7 +16,6 @@ def validate_name(name):
     return True
 
 def validate_price(price):
-    """Validate price."""
     if not isinstance(price, (int, float)):
         raise ValueError("Price must be a number.")
     if price < 0:

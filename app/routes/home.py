@@ -67,10 +67,7 @@ def login():
             if user and check_password_hash(user.password, form.password.data):
                 login_user(user, remember=form.remember.data)
                 next_page = request.args.get('next')
-                flash('Login successful!', 'success')
                 return redirect(next_page) if next_page else redirect(url_for('dashboard.dashboard'))
-            else:
-                flash('Login unsuccessful. Please check username and password.', 'danger')
         except Exception as e:
             logging.error(f"Login error: {str(e)}")
             flash('An error occurred. Please try again.', 'danger')

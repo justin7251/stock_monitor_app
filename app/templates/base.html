@@ -6,37 +6,89 @@
     <title>Stock Monitor</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+    <style>
+        /* Global container styles */
+        .container {
+            padding-left: 2rem;
+            padding-right: 2rem;
+            margin-left: auto;
+            margin-right: auto;
+            max-width: 1400px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+
+        /* Add some breathing room to the main content */
+        main {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+
+        /* Card styling improvements */
+        .card {
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('home.index') }}">Stock Monitor</a>
+            <a class="navbar-brand" href="{{ url_for('home.index') }}">
+                <i class="fas fa-chart-line me-2"></i>Stock Monitor
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav me-auto">
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('dashboard.dashboard') }}">Dashboard</a>
+                        <a class="nav-link" href="{{ url_for('dashboard.dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('stocks.stock_list') }}">Stocks</a>
+                        <a class="nav-link" href="{{ url_for('stocks.stock_list') }}">
+                            <i class="fas fa-list me-1"></i>Stocks
+                        </a>
                     </li>
                     {% endif %}
                 </ul>
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav">
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('home.logout') }}">Logout</a>
+                        <span class="nav-link text-muted me-3">
+                            <i class="fas fa-user me-1"></i>{{ current_user.username }}
+                        </span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('home.logout') }}">
+                            <i class="fas fa-sign-out-alt me-1"></i>Logout
+                        </a>
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('home.login') }}">Login</a>
+                        <a class="nav-link" href="{{ url_for('home.login') }}">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('home.register') }}">Register</a>
+                        <a class="nav-link cta-button" href="{{ url_for('home.register') }}">
+                            <i class="fas fa-user-plus me-1"></i>Register
+                        </a>
                     </li>
                     {% endif %}
                 </ul>
@@ -49,8 +101,9 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">
-                        {{ message }}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 {% endfor %}
             {% endif %}
@@ -60,7 +113,16 @@
     <!-- Main Content -->
     {% block content %}{% endblock %}
 
+    <!-- Footer -->
+    <footer class="footer mt-auto py-3">
+        <div class="container text-center">
+            <span class="text-muted">© 2024 Stock Monitor. All rights reserved.</span>
+        </div>
+    </footer>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    {% block extra_js %}{% endblock %}
 </body>
 </html> 

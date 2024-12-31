@@ -7,7 +7,7 @@ import yfinance as yf
 from datetime import datetime, timedelta
 from app import create_app
 from app.database import db
-from app.database.models import Stock, StockHistory, Commodity
+from app.database.models import Stock, StockHistory
 import logging
 import pandas as pd
 
@@ -81,44 +81,10 @@ def update_stock_data():
             logger.error(f"Error in update_stock_data: {str(e)}")
             db.session.rollback()
 
-def update_commodity_prices():
-    """Update commodity prices"""
-    app = create_app()
-    
-    with app.app_context():
-        try:
-            commodities = Commodity.query.all()
-            
-            if not commodities:
-                logger.info("No commodities found in database")
-                return
-            
-            for commodity in commodities:
-                try:
-                    ticker = yf.Ticker(commodity.symbol)
-                    current_price = ticker.info.get('regularMarketPrice')
-                    
-                    if current_price:
-                        commodity.current_price = current_price
-                        commodity.last_updated = datetime.utcnow()
-                        logger.info(f"Updated price for {commodity.name}: ${current_price}")
-                    
-                except Exception as e:
-                    logger.error(f"Error updating {commodity.name}: {str(e)}")
-                    continue
-            
-            db.session.commit()
-            logger.info("Commodity price update completed")
-            
-        except Exception as e:
-            logger.error(f"Error in update_commodity_prices: {str(e)}")
-            db.session.rollback()
-
 def update_all():
-    """Update both stock and commodity data"""
+    """Update both stock data"""
     try:
         update_stock_data()
-        update_commodity_prices()
         logger.info("All updates completed successfully")
     except Exception as e:
         logger.error(f"Error in update_all: {str(e)}")

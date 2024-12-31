@@ -1,333 +1,132 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Stock Monitor</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% extends "base.html" %}
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f7fa;
-            min-height: 100vh;
-        }
+{% block content %}
+<div class="container">
+    <!-- Include Stock Search Component -->
+    {% include 'components/stock_search.html' %}
 
-        .navbar {
-            background: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 1rem 0;
-        }
-
-        .nav-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 2rem;
-        }
-
-        .nav-brand {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #2c3e50;
-            text-decoration: none;
-        }
-
-        .nav-links a {
-            color: #64748b;
-            text-decoration: none;
-            margin-left: 2rem;
-            transition: color 0.3s;
-        }
-
-        .nav-links a:hover {
-            color: #3b82f6;
-        }
-
-        .dashboard-container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .stat-card h3 {
-            color: #64748b;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-card .value {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .data-section {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .data-section h2 {
-            color: #2c3e50;
-            margin-bottom: 1rem;
-        }
-
-        .add-button {
-            background: #3b82f6;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            text-decoration: none;
-            transition: background-color 0.3s;
-        }
-
-        .add-button:hover {
-            background: #2563eb;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        th {
-            color: #64748b;
-            font-weight: 500;
-        }
-
-        .price-up {
-            color: #10b981;
-        }
-
-        .price-down {
-            color: #ef4444;
-        }
-    </style>
-</head>
-<body>
-    <nav class="navbar">
-        <div class="nav-content">
-            <a href="/" class="nav-brand">Stock Monitor</a>
-            <div class="nav-links">
-                <a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a>
-                <a href="/stocks">Stocks</a>
-                <a href="{{ url_for('home.logout') }}">Logout</a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="dashboard-container">
-        <div class="dashboard-header">
-            <h1>Welcome, {{ current_user.username }}</h1>
-            <a href="/stocks/add" class="add-button">
-                <i class="fas fa-plus"></i> Add Stock
-            </a>
-        </div>
-
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>Total Stocks</h3>
-                <div class="value">{{ stats.total_stocks }}</div>
-            </div>
-            <div class="stat-card">
-                <h3>Portfolio Value</h3>
-                <div class="value">${{ "%.2f"|format(stats.portfolio_value) }}</div>
-            </div>
-            <div class="stat-card">
-                <h3>Today's Change</h3>
-                <div class="value {{ 'price-up' if stats.daily_change > 0 else 'price-down' if stats.daily_change < 0 else '' }}">
-                    {{ "%.2f"|format(stats.daily_change) }}%
+    <!-- Main Dashboard Content -->
+    <div class="row">
+        <!-- Left Column - Main Content -->
+        <div class="col-lg-8">
+            <!-- Portfolio Value Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Portfolio Value</h5>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-primary btn-sm active">1D</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm">1W</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm">1M</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm">3M</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm">1Y</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm">ALL</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {{ portfolio_chart | safe if portfolio_chart }}
                 </div>
             </div>
-            <div class="stat-card">
-                <h3>Total Gain/Loss</h3>
-                <div class="value {{ 'price-up' if stats.total_gain > 0 else 'price-down' if stats.total_gain < 0 else '' }}">
-                    ${{ "%.2f"|format(stats.total_gain) }}
+
+            <!-- Holdings Table -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Your Holdings</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Quantity</th>
+                                    <th>Avg Price</th>
+                                    <th>Current Price</th>
+                                    <th>Total Value</th>
+                                    <th>Return</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for holding in holdings %}
+                                <tr>
+                                    <td><a href="{{ url_for('stocks.stock_detail', symbol=holding.symbol) }}">{{ holding.symbol }}</a></td>
+                                    <td>{{ holding.name }}</td>
+                                    <td><span class="badge bg-secondary">{{ holding.type }}</span></td>
+                                    <td>{{ holding.quantity }}</td>
+                                    <td>${{ "%.2f"|format(holding.avg_price) }}</td>
+                                    <td>${{ "%.2f"|format(holding.current_price) }}</td>
+                                    <td>${{ "%.2f"|format(holding.total_value) }}</td>
+                                    <td class="{{ 'text-success' if holding.return_pct >= 0 else 'text-danger' }}">
+                                        {{ "%.2f"|format(holding.return_pct) }}%
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Portfolio Chart -->
-        <div class="data-section">
-            <h2>Portfolio Performance</h2>
-            <canvas id="portfolioChart"></canvas>
-        </div>
+        <!-- Right Column - Sidebar -->
+        <div class="col-lg-4">
+            <!-- Portfolio Summary Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Portfolio Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Total Value:</span>
+                        <strong>${{ "%.2f"|format(portfolio_summary.total_value) }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Today's Change:</span>
+                        <strong class="{{ 'text-success' if portfolio_summary.daily_change >= 0 else 'text-danger' }}">
+                            {{ "%.2f"|format(portfolio_summary.daily_change) }}%
+                        </strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Total Return:</span>
+                        <strong class="{{ 'text-success' if portfolio_summary.total_return >= 0 else 'text-danger' }}">
+                            {{ "%.2f"|format(portfolio_summary.total_return) }}%
+                        </strong>
+                    </div>
+                </div>
+            </div>
 
-        <!-- Individual Stock Performance -->
-        <div class="data-section">
-            <h2>Stock Performance</h2>
-            <canvas id="stockPerformanceChart"></canvas>
-        </div>
-
-        <div class="data-section">
-            <h2>Your Stocks</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Symbol</th>
-                        <th>Company</th>
-                        <th>Shares</th>
-                        <th>Current Price</th>
-                        <th>Total Value</th>
-                        <th>Change</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for stock in stocks %}
-                    <tr>
-                        <td>{{ stock.symbol }}</td>
-                        <td>{{ stock.company_name }}</td>
-                        <td>{{ stock.quantity }}</td>
-                        <td>${{ "%.2f"|format(stock.current_price) }}</td>
-                        <td>${{ "%.2f"|format(stock.total_value) }}</td>
-                        <td class="{{ 'price-up' if stock.change > 0 else 'price-down' if stock.change < 0 else '' }}">
-                            {{ "%.2f"|format(stock.change) }}%
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <!-- Watchlist Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Watchlist</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for item in watchlist %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">{{ item.symbol }}</h6>
+                                    <small class="text-muted">{{ item.name }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="{{ 'text-success' if item.change >= 0 else 'text-danger' }}">
+                                        ${{ "%.2f"|format(item.price) }}
+                                    </div>
+                                    <small class="{{ 'text-success' if item.change >= 0 else 'text-danger' }}">
+                                        {{ "%.2f"|format(item.change) }}%
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <script>
-    // Portfolio Value Chart
-    const portfolioCtx = document.getElementById('portfolioChart').getContext('2d');
-    new Chart(portfolioCtx, {
-        type: 'line',
-        data: {
-            labels: {{ dates | safe }},
-            datasets: [{
-                label: 'Portfolio Value',
-                data: {{ portfolio_values | safe }},
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                title: {
-                    display: true,
-                    text: 'Portfolio Value Over Time'
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: false,
-                    ticks: {
-                        callback: function(value) {
-                            return '$' + value.toLocaleString();
-                        }
-                    }
-                }
-            },
-            interaction: {
-                mode: 'nearest',
-                axis: 'x',
-                intersect: false
-            }
-        }
-    });
-
-    // Stock Performance Chart
-    const stockData = {{ stock_data | safe }};
-    const stockCtx = document.getElementById('stockPerformanceChart').getContext('2d');
-    new Chart(stockCtx, {
-        type: 'line',
-        data: {
-            labels: Object.values(stockData)[0]?.dates || [],
-            datasets: Object.entries(stockData).map(([symbol, data]) => ({
-                label: symbol,
-                data: data.values,
-                borderColor: getRandomColor(),
-                fill: false,
-                tension: 0.4
-            }))
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                title: {
-                    display: true,
-                    text: 'Individual Stock Performance (Normalized)'
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                }
-            },
-            scales: {
-                y: {
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    ticks: {
-                        callback: function(value) {
-                            return (value * 100).toFixed(2) + '%';
-                        }
-                    }
-                }
-            },
-            interaction: {
-                mode: 'nearest',
-                axis: 'x',
-                intersect: false
-            }
-        }
-    });
-
-    function getRandomColor() {
-        const letters = '0123456789ABCDEF';
-        let color = '#';
-        for (let i = 0; i < 6; i++) {
-            color += letters[Math.floor(Math.random() * 16)];
-        }
-        return color;
-    }
-    </script>
-</body>
-</html>
+</div>
+{% endblock %}

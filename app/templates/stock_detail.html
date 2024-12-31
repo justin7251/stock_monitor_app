@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h2>{{ stock.symbol }} - {{ stock.name }}</h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="indicator-controls mb-3">
+                        <div class="dropdown mt-2">
+                            <button class="btn btn-primary dropdown-toggle" type="button" id="indicatorDropdown" data-bs-toggle="dropdown">
+                                Add Indicator
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="indicatorDropdown">
+                                {% for category, indicators in indicators.items() %}
+                                <li class="dropdown-header">{{ category }}</li>
+                                {% for name in indicators.keys() %}
+                                <li><a class="dropdown-item" href="#" onclick="toggleIndicator('{{ category }}', '{{ name }}')">{{ name }}</a></li>
+                                {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="mt-2 mb-2">
+                            <button class="btn btn-secondary" onclick="changePeriod('1mo')">1mo</button>
+                            <button class="btn btn-secondary" onclick="changePeriod('3mo')">3mo</button>
+                            <button class="btn btn-secondary" onclick="changePeriod('6mo')">6mo</button>
+                            <button class="btn btn-secondary" onclick="changePeriod('1y')">1y</button>
+                            <button class="btn btn-secondary" onclick="changePeriod('max')">max</button>
+                        </div>
+                        <div id="active-indicators" class="mt-2">
+                            <!-- Active indicators will be displayed here -->
+                        </div>
+                    </div>
+                    <div id="chart-container">
+                        {{ plot_html | safe }}
+                    </div>
+                </div>
+            </div>
+            <!-- Stock info table -->
+        </div>
+    </div>
+</div>
+
+<style>
+.indicator-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    margin: 2px;
+    border-radius: 15px;
+    background-color: #2196F3;
+    color: white;
+}
+
+.indicator-badge i {
+    margin-left: 5px;
+    cursor: pointer;
+}
+
+#chart-container {
+    min-height: 600px;
+    position: relative;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+</style>
+
+<script>
+let activeIndicators = new Set();
+let currentPeriod = '1mo';
+
+function showLoading() {
+    const container = document.getElementById('chart-container');
+    const overlay = document.createElement('div');
+    overlay.className = 'loading-overlay';
+    overlay.innerHTML = '<div class="spinner-border text-light" role="status"><span class="visually-hidden">Loading...</span></div>';
+    container.appendChild(overlay);
+}
+
+function hideLoading() {
+    const overlay = document.querySelector('.loading-overlay');
+    if (overlay) {
+        overlay.remove();
+    }
+}
+
+function toggleIndicator(category, name) {
+    const key = `${category}:${name}`;
+    if (activeIndicators.has(key)) {
+        activeIndicators.delete(key);
+    } else {
+        activeIndicators.add(key);
+    }
+    updateChart();
+    updateActiveIndicators();
+}
+
+function updateActiveIndicators() {
+    const container = document.getElementById('active-indicators');
+    container.innerHTML = '';
+    activeIndicators.forEach(key => {
+        const [category, name] = key.split(':');
+        const badge = document.createElement('div');
+        badge.className = 'indicator-badge';
+        badge.innerHTML = `${name} <i class="fas fa-times" onclick="toggleIndicator('${category}', '${name}')"></i>`;
+        container.appendChild(badge);
+    });
+}
+
+function updateChart() {
+    showLoading();
+    const indicators = Array.from(activeIndicators).map(key => {
+        const [category, name] = key.split(':');
+        return { category, name };
+    });
+    
+    fetch(`/api/stock/{{ stock.symbol }}/chart?period=${currentPeriod}&indicators=${JSON.stringify(indicators)}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(html => {
+            const container = document.getElementById('chart-container');
+            
+            // Clear the container
+            container.innerHTML = '';
+            
+            // Create a temporary div to parse the HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            
+            // Extract the new chart div and its script
+            const newChartDiv = tempDiv.querySelector('.plotly-graph-div');
+            const scripts = tempDiv.getElementsByTagName('script');
+            
+            // Add the new chart div to the container
+            container.appendChild(newChartDiv);
+            
+            // Execute any scripts that came with the new chart
+            for (let script of scripts) {
+                if (script.innerHTML) {
+                    eval(script.innerHTML);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error updating chart:', error);
+            alert('Error updating chart. Please try again.');
+        })
+        .finally(() => {
+            hideLoading();
+        });
+}
+
+function changePeriod(period) {
+    const buttons = document.querySelectorAll('.period-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.period === period) {
+            btn.classList.add('active');
+        }
+    });
+    currentPeriod = period;
+    updateChart();
+}
+
+// Initialize tooltips and popovers if using Bootstrap
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %} 

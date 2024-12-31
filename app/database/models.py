@@ -13,7 +13,6 @@ class User(db.Model, UserMixin):
     
     # Relationships
     user_stocks = db.relationship('UserStock', backref='user', lazy=True)
-    user_commodities = db.relationship('UserCommodity', backref='user', lazy=True)
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -24,20 +23,24 @@ class Stock(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     symbol = db.Column(db.String(10), nullable=False)
-    company_name = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    type = db.Column(db.String(20), nullable=False)
     current_price = db.Column(db.Float)
     last_updated = db.Column(db.DateTime, index=True)  # Index for time-based queries
     
     # Relationship
     user_stocks = db.relationship('UserStock', backref='stock', lazy=True)
+    price_history = db.relationship('StockHistory', backref='stock', lazy=True)
+
 
     def __repr__(self):
         return f'<Stock {self.symbol}>'
 
     # Create indexes
     __table_args__ = (
-        Index('idx_symbol', 'symbol'),  # Index for symbol lookups
-        Index('idx_symbol_date', 'symbol', 'last_updated'),  # Composite index for symbol + date queries
+        Index('idx_symbol', 'symbol'),
+        Index('idx_symbol_type', 'symbol', 'type'),
+        Index('idx_symbol_date', 'symbol', 'last_updated'),
     )
 
 class StockHistory(db.Model):
@@ -55,8 +58,8 @@ class StockHistory(db.Model):
     
     # Create indexes for efficient querying
     __table_args__ = (
-        Index('idx_stock_date', 'stock_id', 'date'),  # Composite index for stock + date queries
-        Index('idx_date', 'date'),  # Index for date-based queries
+        Index('idx_stock_date', 'stock_id', 'date'),
+        Index('idx_date', 'date'),
     )
 
     def __repr__(self):
@@ -82,32 +85,3 @@ class UserStock(db.Model):
     def __repr__(self):
         return f'<UserStock {self.user_id}:{self.stock_id}>'
 
-class Commodity(db.Model):
-    """Commodity data table - stores general commodity information and current prices"""
-    __tablename__ = 'commodities'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    symbol = db.Column(db.String(10), unique=True, nullable=False)
-    name = db.Column(db.String(100), nullable=False)
-    current_price = db.Column(db.Float)
-    last_updated = db.Column(db.DateTime)
-    
-    # Relationship
-    user_commodities = db.relationship('UserCommodity', backref='commodity', lazy=True)
-
-    def __repr__(self):
-        return f'<Commodity {self.symbol}>'
-
-class UserCommodity(db.Model):
-    """User's commodity holdings"""
-    __tablename__ = 'user_commodities'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    commodity_id = db.Column(db.Integer, db.ForeignKey('commodities.id'), nullable=False)
-    quantity = db.Column(db.Float, nullable=False)
-    purchase_price = db.Column(db.Float, nullable=False)
-    purchase_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-    def __repr__(self):
-        return f'<UserCommodity {self.user_id}:{self.commodity_id}>'

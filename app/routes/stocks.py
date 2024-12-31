@@ -4,6 +4,9 @@ from app.database.models import Stock, UserStock
 from app.database import db
 from app.utils import validate_stock_symbol, validate_name, validate_price
 import logging
+from app.utils.stock_plotter import StockPlotter
+from app.utils.indicators import AVAILABLE_INDICATORS
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 stocks_bp = Blueprint('stocks', __name__)
@@ -22,7 +25,8 @@ def stock_list():
                 stocks_data.append({
                     'id': stock.id,
                     'symbol': stock.symbol,
-                    'company_name': stock.company_name,
+                    'name': stock.name,
+                    'type': stock.type,
                     'quantity': user_stock.quantity,
                     'purchase_price': user_stock.purchase_price,
                     'current_price': stock.current_price or user_stock.purchase_price
@@ -49,6 +53,7 @@ def create_stock():
         
         # Check if stock already exists
         existing_stock = Stock.query.filter_by(symbol=data['symbol']).first()
+
         if existing_stock:
             # Check if user already owns this stock
             existing_user_stock = UserStock.query.filter_by(
@@ -77,11 +82,13 @@ def create_stock():
             # Create new stock and UserStock entry
             new_stock = Stock(
                 symbol=data['symbol'],
-                company_name=data['name'],
-                current_price=data['price']
+                name=data['name'],
+                type=data['type'],
+                current_price=data['price'],
+                last_updated=datetime.now()
             )
             db.session.add(new_stock)
-            db.session.flush()  # Get the new stock's ID
+            db.session.flush()  
             
             user_stock = UserStock(
                 user_id=current_user.id,
@@ -124,4 +131,36 @@ def delete_stock(stock_id):
         logger.error(f"Error in delete_stock: {str(e)}")
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+@stocks_bp.route('/detail/<symbol>')
+@login_required
+def stock_detail(symbol):
+    try:
+        stock = Stock.query.filter_by(symbol=symbol).first_or_404()
+        user_stock = UserStock.query.filter_by(
+            user_id=current_user.id,
+            stock_id=stock.id
+        ).first_or_404()
+        
+        # Create stock plotter
+        plotter = StockPlotter(symbol)
+        plot_html = plotter.create_plot()
+        
+        stock_data = {
+            'symbol': stock.symbol,
+            'name': stock.name,
+            'type': stock.type,
+            'current_price': stock.current_price,
+            'quantity': user_stock.quantity,
+            'purchase_price': user_stock.purchase_price
+        }
+        
+        return render_template('stock_detail.html', 
+                             stock=stock_data,
+                             plot_html=plot_html,
+                             indicators=AVAILABLE_INDICATORS)
+    except Exception as e:
+        logger.error(f"Error in stock_detail: {str(e)}")
+        flash(f'Error loading stock details: {str(e)}', 'danger')
+        return redirect(url_for('stocks.stock_list'))
 

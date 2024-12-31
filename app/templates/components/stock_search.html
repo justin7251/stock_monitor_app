@@ -1,0 +1,151 @@
+<!-- Stock Search Component -->
+<div class="row mt-4 mb-3">
+    <div class="col-md-6 mx-auto">
+        <div class="input-group">
+            <input type="text" 
+                   class="form-control" 
+                   id="quickSearch" 
+                   placeholder="Search stocks..."
+                   autocomplete="off">
+            <div class="dropdown-menu w-100" id="quickSearchResults">
+                <!-- Search results will be inserted here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search functionality JavaScript -->
+<script>
+let searchTimeout;
+const quickSearchInput = document.getElementById('quickSearch');
+const quickSearchResults = document.getElementById('quickSearchResults');
+
+quickSearchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const query = this.value.trim();
+    
+    if (query.length < 2) {
+        quickSearchResults.innerHTML = '';
+        quickSearchResults.classList.remove('show');
+        return;
+    }
+    
+    searchTimeout = setTimeout(() => {
+        fetch(`/api/search/stocks?query=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                quickSearchResults.innerHTML = '';
+                
+                if (data.length > 0) {
+                    data.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'dropdown-item d-flex align-items-center justify-content-between';
+                        div.innerHTML = `
+                            <div class="d-flex flex-column">
+                                <div>
+                                    <strong>${item.symbol}</strong> 
+                                    ${item.exchange ? `<small class="text-muted">${item.exchange}</small>` : ''}
+                                </div>
+                                <small class="text-muted">${item.name}</small>
+                                <small class="badge bg-secondary">${item.type}</small>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary view-btn" title="View Details">
+                                    <i class="fas fa-chart-line"></i>
+                                </button>
+                                <button class="btn btn-outline-success add-btn" title="Add to Portfolio">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        `;
+                        
+                        // View button click handler
+                        const viewBtn = div.querySelector('.view-btn');
+                        viewBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            window.location.href = `/stock/${item.symbol}`;
+                        });
+                        
+                        // Add to portfolio button click handler
+                        const addBtn = div.querySelector('.add-btn');
+                        addBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            window.location.href = `/stocks/add/${item.symbol}`;
+                        });
+                        
+                        quickSearchResults.appendChild(div);
+                    });
+                    quickSearchResults.classList.add('show');
+                } else {
+                    quickSearchResults.classList.remove('show');
+                }
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                quickSearchResults.classList.remove('show');
+            });
+    }, 300);
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    if (!quickSearchInput.contains(e.target)) {
+        quickSearchResults.classList.remove('show');
+    }
+});
+</script>
+
+<!-- Search Component Styles -->
+<style>
+    .dropdown-menu.show {
+        display: block;
+        max-height: 400px;
+        overflow-y: auto;
+        margin-top: 0;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        z-index: 1050;
+    }
+    
+    .dropdown-item {
+        cursor: pointer;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .dropdown-item:last-child {
+        border-bottom: none;
+    }
+    
+    .dropdown-item:hover {
+        background-color: rgba(0,0,0,0.05);
+    }
+    
+    #quickSearch {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    
+    #quickSearchResults.show {
+        width: 100% !important;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .btn-group-sm .btn i {
+        font-size: 0.875rem;
+    }
+    
+    .dropdown-item .badge {
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+    }
+    
+    .dropdown-item small {
+        display: inline-block;
+        margin-left: 0.5rem;
+    }
+</style> 

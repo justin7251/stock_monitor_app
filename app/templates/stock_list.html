@@ -27,7 +27,8 @@
                     <thead class="table-light">
                         <tr>
                             <th>Symbol</th>
-                            <th>Company Name</th>
+                            <th>Name</th>
+                            <th>Type</th>
                             <th>Quantity</th>
                             <th>Purchase Price</th>
                             <th>Current Price</th>
@@ -40,13 +41,19 @@
                         {% for stock in stocks %}
                         <tr>
                             <td>{{ stock.symbol }}</td>
-                            <td>{{ stock.company_name }}</td>
+                            <td>{{ stock.name }}</td>
+                            <td>{{ stock.type }}</td>
                             <td>{{ stock.quantity }}</td>
                             <td>${{ "%.2f"|format(stock.purchase_price) }}</td>
                             <td>${{ "%.2f"|format(stock.current_price) }}</td>
                             <td>${{ "%.2f"|format(stock.current_price * stock.quantity) }}</td>
                             <td class="{{ 'text-success' if stock.current_price > stock.purchase_price else 'text-danger' }}">
                                 {{ "%.2f"|format((stock.current_price - stock.purchase_price) / stock.purchase_price * 100) }}%
+                            </td>
+                            <td>
+                                <a href="{{ url_for('stocks.detail', symbol=stock.symbol) }}" class="btn btn-info btn-sm">
+                                    <i class="fas fa-chart-line"></i> Details
+                                </a>
                             </td>
                             <td>
                                 <button class="btn btn-danger btn-sm delete-stock" data-stock-id="{{ stock.id }}">
@@ -81,8 +88,12 @@
                         <input type="text" class="form-control" id="symbol" name="symbol" required>
                     </div>
                     <div class="mb-3">
-                        <label for="name" class="form-label">Company Name</label>
+                        <label for="name" class="form-label">Name</label>
                         <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3"></div>
+                        <label for="type" class="form-label">Type</label>
+                        <input type="text" class="form-control" id="type" name="type" required>
                     </div>
                     <div class="mb-3">
                         <label for="quantity" class="form-label">Quantity</label>

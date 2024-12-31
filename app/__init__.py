@@ -64,11 +64,12 @@ def create_app():
         return User.query.get(int(user_id))
 
     # Register blueprints
-    from app.routes import home_bp, dashboard_bp, stocks_bp
+    from app.routes import home_bp, dashboard_bp, stocks_bp, api_bp
 
     app.register_blueprint(home_bp)
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(stocks_bp, url_prefix='/stocks')
+    app.register_blueprint(api_bp)
     # Register error handlers
     @app.errorhandler(500)
     def internal_error(error):

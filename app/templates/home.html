@@ -1,246 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Monitor - Home</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% extends "base.html" %}
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f7fa;
-            min-height: 100vh;
-        }
-
-        .navbar {
-            background: #2c3e50;
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .nav-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .nav-brand {
-            color: white;
-            font-size: 1.5rem;
-            font-weight: bold;
-            text-decoration: none;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 20px;
-        }
-
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-
-        .nav-links a:hover {
-            background-color: rgba(255,255,255,0.1);
-        }
-
-        .main-content {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        .hero-section {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 2rem;
-            padding: 4rem 0;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .hero-content {
-            flex: 1;
-            padding-right: 2rem;
-        }
-
-        .hero-image {
-            flex: 1;
-            position: relative;
-        }
-
-        .hero-image img {
-            width: 100%;
-            max-width: 600px;
-            height: auto;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-
-        @media (max-width: 968px) {
-            .hero-section {
-                flex-direction: column;
-                text-align: center;
-                padding: 2rem 1rem;
-            }
-
-            .hero-content {
-                padding-right: 0;
-            }
-
-            .hero-image {
-                margin-top: 2rem;
-            }
-        }
-
-        .welcome-section {
-            text-align: left;
-            padding: 0;
-        }
-
-        .welcome-section h1 {
-            font-size: 3rem;
-            color: #2c3e50;
-            margin-bottom: 1.5rem;
-            line-height: 1.2;
-        }
-
-        .welcome-section p {
-            color: #64748b;
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
-            line-height: 1.6;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-
-        .feature-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            text-align: center;
-        }
-
-        .feature-card i {
-            font-size: 2rem;
-            color: #3b82f6;
-            margin-bottom: 1rem;
-        }
-
-        .feature-card h3 {
-            color: #2c3e50;
-            margin-bottom: 1rem;
-        }
-
-        .feature-card p {
-            color: #64748b;
-        }
-
-        .cta-button {
-            display: inline-block;
-            background: #3b82f6;
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .cta-button:hover {
-            background: #2563eb;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-        }
-
-        @media (max-width: 768px) {
-            .nav-content {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .nav-links {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .welcome-section h1 {
-                font-size: 2rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <nav class="navbar">
-        <div class="nav-content">
-            <a href="/" class="nav-brand">Stock Monitor</a>
-            <div class="nav-links">
-                {% if current_user.is_authenticated %}
-                    <a href="/dashboard">Dashboard</a>
-                    <a href="/stocks">Stocks</a>
-                    <a href="{{ url_for('home.logout') }}">Logout</a>
-                {% else %}
-                    <a href="{{ url_for('home.login') }}">Login</a>
-                    <a href="{{ url_for('home.register') }}">Register</a>
-                {% endif %}
+{% block content %}
+<div class="main-content">
+    <section class="hero-section">
+        <div class="hero-content welcome-section">
+            <h1>Welcome to Stock Monitor</h1>
+            <p>Track your investments, analyze market trends, and make informed decisions with our comprehensive stock monitoring platform.</p>
+            {% if not current_user.is_authenticated %}
+            <div class="cta-buttons">
+                <a href="{{ url_for('home.register') }}" class="cta-button">Get Started</a>
+                <a href="{{ url_for('home.login') }}" class="cta-button secondary">Login</a>
             </div>
+            {% else %}
+            <div class="cta-buttons">
+                <a href="{{ url_for('dashboard.dashboard') }}" class="cta-button">Go to Dashboard</a>
+            </div>
+            {% endif %}
         </div>
-    </nav>
+        <div class="hero-image">
+            <img src="{{ url_for('static', filename='images/stock-graph.webp') }}" alt="Stock Chart">
+        </div>
+    </section>
 
-    <main class="main-content">
-        <section class="hero-section">
-            <div class="hero-content">
-                <div class="welcome-section">
-                    <h1>Track Your Investments with Confidence</h1>
-                    <p>Get real-time stock updates, advanced analytics, and personalized insights to make informed investment decisions.</p>
-                    {% if not current_user.is_authenticated %}
-                        <a href="{{ url_for('home.register') }}" class="cta-button">Start Trading Now</a>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="hero-image">
-                <img src="{{ url_for('static', filename='image/stock-graph.webp') }}" 
-                     alt="Stock Market Graph" 
-                     loading="lazy">
-            </div>
-        </section>
-
+    <section class="features-section">
         <div class="features-grid">
             <div class="feature-card">
                 <i class="fas fa-chart-line"></i>
-                <h3>Real-time Tracking</h3>
-                <p>Monitor your stocks in real-time with accurate and up-to-date market data.</p>
+                <h3>Real-Time Tracking</h3>
+                <p>Monitor your stocks in real-time with live price updates and market data.</p>
             </div>
             <div class="feature-card">
                 <i class="fas fa-analytics"></i>
-                <h3>Advanced Analytics</h3>
-                <p>Get detailed insights and analytics to make informed investment decisions.</p>
+                <h3>Portfolio Analysis</h3>
+                <p>Get detailed insights into your portfolio performance with advanced analytics.</p>
             </div>
             <div class="feature-card">
                 <i class="fas fa-bell"></i>
-                <h3>Custom Alerts</h3>
-                <p>Set up personalized alerts for price changes and market movements.</p>
+                <h3>Price Alerts</h3>
+                <p>Set custom alerts for price changes and market movements.</p>
             </div>
         </div>
-    </main>
-</body>
-</html>
+    </section>
+</div>
+{% endblock %}

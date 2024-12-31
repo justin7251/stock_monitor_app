@@ -12,7 +12,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def load_historical_data(days=365*10):  # 10 years by default
+def load_historical_data(days=365*20):  # 20 years by default
     app = create_app()
     
     with app.app_context():
