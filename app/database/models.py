@@ -85,3 +85,13 @@ class UserStock(db.Model):
     def __repr__(self):
         return f'<UserStock {self.user_id}:{self.stock_id}>'
 
+
+class Watchlist(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    stock_symbol = db.Column(db.String(10), nullable=False)
+
+    user = db.relationship('User', backref='watchlist_items')
+
+    def __repr__(self):
+        return f'<Watchlist {self.stock_symbol}>'

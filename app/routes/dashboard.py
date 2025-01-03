@@ -63,10 +63,25 @@ def dashboard():
         # Sort holdings by value
         holdings = sorted(holdings, key=lambda x: x['total_value'], reverse=True)
 
+        # Fetch user's watchlist
+        watchlist_items = Watchlist.query.filter_by(user_id=current_user.id).all()
+        watchlist = []
+
+        for item in watchlist_items:
+            # Assuming you have a function to get stock details
+            stock_details = get_stock_details(item.stock_symbol)  # Fetch stock details from an API or database
+            watchlist.append({
+                'symbol': item.stock_symbol,
+                'name': stock_details['name'],
+                'price': stock_details['current_price'],
+                'change': stock_details['change_percentage']
+            })
+
         return render_template(
             'dashboard.html',
             holdings=holdings,
-            portfolio_summary=portfolio_summary
+            portfolio_summary=portfolio_summary,
+            watchlist=watchlist
         )
 
     except Exception as e:
