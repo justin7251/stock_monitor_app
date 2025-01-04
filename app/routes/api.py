@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
-from app.database.models import Stock, UserStock, StockHistory
+from app.database.models import Stock, UserStock, StockHistory, Watchlist
 from app.database import db
 import yfinance as yf
 from datetime import datetime, timedelta
@@ -295,4 +295,46 @@ def search_stocks():
         
     except Exception as e:
         print(f"Stock search error: {str(e)}")
-        return jsonify({'error': 'Search failed'}), 500 
+        return jsonify({'error': 'Search failed'}), 500
+
+@api_bp.route('/watchlist/add', methods=['POST'])
+@login_required
+def add_to_watchlist():
+    data = request.get_json()
+    symbol = data.get('symbol')
+
+    if not symbol:
+        return jsonify({'error': 'Symbol is required'}), 400
+
+    # Check if the stock exists in the stocks table
+    stock = Stock.query.filter_by(symbol=symbol).first()
+    
+    if not stock:
+        try:
+            ticker = yf.Ticker(symbol)
+            stock_info = ticker.info
+            
+            # Create a new Stock object
+            stock = Stock(
+                symbol=symbol,
+                name=stock_info.get('longName', 'Unknown'),
+                current_price=stock_info.get('currentPrice', 0.0),
+                type=stock_info.get('quoteType', 'Unknown'),
+                last_updated=datetime.utcnow()
+            )
+            db.session.add(stock)
+            db.session.commit()
+        except Exception as e:
+            return jsonify({'error': f'Failed to fetch stock data: {str(e)}'}), 500
+
+    # Check if the stock is already in the watchlist
+    existing_watchlist_item = Watchlist.query.filter_by(user_id=current_user.id, stock_id=stock.id).first()
+    if existing_watchlist_item:
+        return jsonify({'error': 'Stock is already in your watchlist'}), 400
+
+    # Add the stock to the watchlist
+    watchlist_item = Watchlist(user_id=current_user.id, stock_id=stock.id)
+    db.session.add(watchlist_item)
+    db.session.commit()
+
+    return jsonify({'message': f'Stock {symbol} added to watchlist'}), 200

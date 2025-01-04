@@ -87,11 +87,21 @@ class UserStock(db.Model):
 
 
 class Watchlist(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    stock_symbol = db.Column(db.String(10), nullable=False)
+    __tablename__ = 'watchlists'  # Specify the table name
 
-    user = db.relationship('User', backref='watchlist_items')
+    id = db.Column(db.Integer, primary_key=True)  # Unique identifier for each watchlist entry
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # Foreign key referencing the User model
+    stock_id = db.Column(db.Integer, db.ForeignKey('stocks.id'), nullable=False)  # Foreign key referencing the Stock model
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)  # Timestamp for when the entry was created
+    notes = db.Column(db.Text, nullable=True)  # Optional notes for the watchlist entry
+
+    # Relationships
+    user = db.relationship('User', backref='watchlist_items', foreign_keys=[user_id])  # Relationship to the User model
+    stock = db.relationship('Stock', backref='watchlist_entries', foreign_keys=[stock_id])  # Relationship to the Stock model
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'stock_id', name='idx_user_watchlist'),  # Ensure a user can only have one entry per stock
+    )
 
     def __repr__(self):
-        return f'<Watchlist {self.stock_symbol}>'
+        return f'<Watchlist {self.stock_id} for User {self.user_id}>'
