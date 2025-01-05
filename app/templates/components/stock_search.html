@@ -75,14 +75,26 @@ quickSearchInput.addEventListener('input', function() {
 
 // Function to add stock to watchlist
 function addToWatchlist(symbol) {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
     fetch(`/api/watchlist/add`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken  // Include the CSRF token here
         },
         body: JSON.stringify({ symbol: symbol })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            // Log the response for debugging
+            return response.json().then(err => {
+                console.error('Error response:', err);
+                throw new Error(err.error || 'An error occurred');
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.error) {
             alert(`Error: ${data.error}`);
@@ -92,7 +104,7 @@ function addToWatchlist(symbol) {
     })
     .catch(error => {
         console.error('Error adding to watchlist:', error);
-        alert('An error occurred while adding to the watchlist.');
+        alert('An error occurred while adding to the watchlist: ' + error.message);
     });
 }
 

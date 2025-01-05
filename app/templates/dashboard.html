@@ -41,7 +41,6 @@
                                 <tr>
                                     <th>Symbol</th>
                                     <th>Name</th>
-                                    <th>Type</th>
                                     <th>Quantity</th>
                                     <th>Avg Price</th>
                                     <th>Current Price</th>
@@ -54,9 +53,7 @@
                                 <tr>
                                     <td><a href="{{ url_for('stocks.stock_detail', symbol=holding.symbol) }}">{{ holding.symbol }}</a></td>
                                     <td>{{ holding.name }}</td>
-                                    <td><span class="badge bg-secondary">{{ holding.type }}</span></td>
                                     <td>{{ holding.quantity }}</td>
-                                    <td>${{ "%.2f"|format(holding.avg_price) }}</td>
                                     <td>${{ "%.2f"|format(holding.current_price) }}</td>
                                     <td>${{ "%.2f"|format(holding.total_value) }}</td>
                                     <td class="{{ 'text-success' if holding.return_pct >= 0 else 'text-danger' }}">

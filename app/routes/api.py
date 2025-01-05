@@ -310,11 +310,11 @@ def add_to_watchlist():
     stock = Stock.query.filter_by(symbol=symbol).first()
     
     if not stock:
+        # If the stock does not exist, add it to the stocks table
         try:
             ticker = yf.Ticker(symbol)
             stock_info = ticker.info
             
-            # Create a new Stock object
             stock = Stock(
                 symbol=symbol,
                 name=stock_info.get('longName', 'Unknown'),
