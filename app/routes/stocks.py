@@ -137,23 +137,26 @@ def delete_stock(stock_id):
 def stock_detail(symbol):
     try:
         stock = Stock.query.filter_by(symbol=symbol).first_or_404()
-        user_stock = UserStock.query.filter_by(
-            user_id=current_user.id,
-            stock_id=stock.id
-        ).first_or_404()
+
+        stock_data = {}
+        if stock:
+            user_stock = UserStock.query.filter_by(
+                user_id=current_user.id,
+                stock_id=stock.id
+            ).first_or_404()
+
+            stock_data = {
+                'symbol': stock.symbol,
+                'name': stock.name,
+                'type': stock.type,
+                'current_price': stock.current_price,
+                'quantity': user_stock.quantity,
+                'purchase_price': user_stock.purchase_price
+            }
         
         # Create stock plotter
         plotter = StockPlotter(symbol)
         plot_html = plotter.create_plot()
-        
-        stock_data = {
-            'symbol': stock.symbol,
-            'name': stock.name,
-            'type': stock.type,
-            'current_price': stock.current_price,
-            'quantity': user_stock.quantity,
-            'purchase_price': user_stock.purchase_price
-        }
         
         return render_template('stock_detail.html', 
                              stock=stock_data,

@@ -50,9 +50,6 @@ def dashboard():
         else:
             print(f"Stock with ID {item.stock_id} not found.")  # Debugging line
 
-    print("Watchlist Items:", watchlist_items)  # Debugging line
-    print("Watchlist:", watchlist)  # Debugging line
-
     # Check if portfolio_summary is being created correctly
     portfolio_summary = {
         'total_value': total_value,
